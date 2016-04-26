@@ -91,7 +91,7 @@ function init(timeout, adUnitCodeArr) {
     cbTimeout = timeout;
   }
 
-  if (!isValidAdUnitSetting()) {
+  if (!pbjs.adUnits && pbjs.adUnits.length !== 0) {
     utils.logMessage('No adUnits configured. No bids requested.');
     return;
   }
@@ -120,11 +120,6 @@ function init(timeout, adUnitCodeArr) {
     //sort and call // default no sort
     sortAndCallBids();
   }
-}
-
-function isValidAdUnitSetting() {
-  return !!(pbjs.adUnits && pbjs.adUnits.length !== 0);
-
 }
 
 function timeOutBidders() {
@@ -331,11 +326,6 @@ function resetBids() {
   pb_placements = [];
   pb_targetingMap = {};
   pb_bidsTimedOut = false;
-}
-
-function requestAllBids(timeout) {
-  resetBids();
-  init(timeout);
 }
 
 function checkDefinedPlacement(id) {
@@ -678,7 +668,8 @@ pbjs.removeAdUnit = function (adUnitCode) {
 pbjs.requestBids = function (requestObj) {
   utils.logInfo('Invoking pbjs.requestBids', arguments);
   if (!requestObj) {
-    requestAllBids();
+    resetBids();
+    init(timeout);
   } else {
     var adUnitCodes = requestObj.adUnitCodes;
     var adUnits = requestObj.adUnits;
@@ -700,7 +691,8 @@ pbjs.requestBids = function (requestObj) {
       init(timeout);
     } else {
       //request all ads
-      requestAllBids(timeout);
+      resetBids();
+      init(timeout);
     }
 
     pbjs.adUnits = adUnitBackup;
