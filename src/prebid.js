@@ -157,9 +157,6 @@ function loadPreBidders() {
   for (i = 0; i < pb_preBidders.length; i++) {
     pb_preBidders[i].loadPreBid();
   }
-
-  //send a reference to bidmanager
-  bidmanager.setBidderMap(pb_bidderMap);
 }
 
 function storeBidRequestByBidder(placementCode, sizes, bids) {

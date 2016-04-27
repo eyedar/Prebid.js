@@ -8,7 +8,6 @@ var objectType_undefined = 'undefined';
 var externalCallbackByAdUnitArr = [];
 var externalCallbackArr = [];
 var externalOneTimeCallback = null;
-var biddersByPlacementMap = {};
 
 var pbCallbackMap = {};
 exports.pbCallbackMap = pbCallbackMap;
@@ -184,7 +183,11 @@ exports.addBidResponse = function (adUnitCode, bid) {
 
   } else {
     //create an empty bid bid response object
-    bidResponseObj = this.createEmptyBidResponseObj();
+    bidResponseObj = {
+      bids: [],
+      allBidsAvailable: false,
+      bidsReceivedCount: 0
+    };
   }
 
   //store the bidResponse in a map
@@ -193,14 +196,6 @@ exports.addBidResponse = function (adUnitCode, bid) {
   this.checkIfAllBidsAreIn(adUnitCode);
 
   //TODO: check if all bids are in
-};
-
-exports.createEmptyBidResponseObj = function () {
-  return {
-    bids: [],
-    allBidsAvailable: false,
-    bidsReceivedCount: 0
-  };
 };
 
 exports.getKeyValueTargetingPairs = function (bidderCode, custBidObj) {
@@ -392,10 +387,6 @@ function checkBidsBackByAdUnit(adUnitCode) {
     }
   }
 }
-
-exports.setBidderMap = function (bidderMap) {
-  biddersByPlacementMap = bidderMap;
-};
 
 /*
  *   This method checks if all bids have a response (bid, no bid, timeout) and will execute callback method if all bids are in
