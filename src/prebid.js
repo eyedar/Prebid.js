@@ -22,7 +22,6 @@ var objectType_string = 'string';
 var BID_WON = CONSTANTS.EVENTS.BID_WON;
 var BID_TIMEOUT = CONSTANTS.EVENTS.BID_TIMEOUT;
 
-var pb_preBidders = [];
 var pb_placements = [];
 var pb_bidderMap = {};
 var pb_targetingMap = {};
@@ -152,10 +151,6 @@ function loadPreBidders() {
 
     //store pending response by placement
     bidmanager.addBidResponse(placementCode);
-  }
-
-  for (i = 0; i < pb_preBidders.length; i++) {
-    pb_preBidders[i].loadPreBid();
   }
 }
 
