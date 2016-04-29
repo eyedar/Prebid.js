@@ -657,38 +657,40 @@ pbjs.removeAdUnit = function (adUnitCode) {
  * @param {function} [requestObj.bidsBackHandler] Callback to execute when all the bid responses are back or the timeout hits.
  * @alias module:pbjs.requestBids
  */
-pbjs.requestBids = function (requestObj) {
-  utils.logInfo('Invoking pbjs.requestBids', arguments);
-  if (!requestObj) {
-    resetBids();
-    init(timeout);
-  } else {
-    var adUnitCodes = requestObj.adUnitCodes;
-    var adUnits = requestObj.adUnits;
-    var timeout = requestObj.timeout;
-    var bidsBackHandler = requestObj.bidsBackHandler;
-    var adUnitBackup = pbjs.adUnits.slice(0);
+pbjs.requestBids = function () {
+  adaptermanager.callBids();
 
-    if (typeof bidsBackHandler === objectType_function) {
-      bidmanager.addOneTimeCallback(bidsBackHandler);
-    }
-
-    if (adUnitCodes && utils.isArray(adUnitCodes)) {
-      resetBids();
-      init(timeout, adUnitCodes);
-
-    } else if (adUnits && utils.isArray(adUnits)) {
-      resetBids();
-      pbjs.adUnits = adUnits;
-      init(timeout);
-    } else {
-      //request all ads
-      resetBids();
-      init(timeout);
-    }
-
-    pbjs.adUnits = adUnitBackup;
-  }
+  //utils.logInfo('Invoking pbjs.requestBids', arguments);
+  //if (!requestObj) {
+  //  resetBids();
+  //  init(timeout);
+  //} else {
+  //  var adUnitCodes = requestObj.adUnitCodes;
+  //  var adUnits = requestObj.adUnits;
+  //  var timeout = requestObj.timeout;
+  //  var bidsBackHandler = requestObj.bidsBackHandler;
+  //  var adUnitBackup = pbjs.adUnits.slice(0);
+  //
+  //  if (typeof bidsBackHandler === objectType_function) {
+  //    bidmanager.addOneTimeCallback(bidsBackHandler);
+  //  }
+  //
+  //  if (adUnitCodes && utils.isArray(adUnitCodes)) {
+  //    resetBids();
+  //    init(timeout, adUnitCodes);
+  //
+  //  } else if (adUnits && utils.isArray(adUnits)) {
+  //    resetBids();
+  //    pbjs.adUnits = adUnits;
+  //    init(timeout);
+  //  } else {
+  //    //request all ads
+  //    resetBids();
+  //    init(timeout);
+  //  }
+  //
+  //  pbjs.adUnits = adUnitBackup;
+  //}
 
 };
 
