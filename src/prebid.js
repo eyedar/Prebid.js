@@ -583,38 +583,6 @@ pbjs.requestBids = function ({ bidsBackHandler, timeout }) {
   setTimeout(bidmanager.executeCallback, cbTimeout);
 
   adaptermanager.callBids();
-
-  //if (!requestObj) {
-  //  resetBids();
-  //  init(timeout);
-  //} else {
-  //  var adUnitCodes = requestObj.adUnitCodes;
-  //  var adUnits = requestObj.adUnits;
-  //  var timeout = requestObj.timeout;
-  //  var bidsBackHandler = requestObj.bidsBackHandler;
-  //  var adUnitBackup = pbjs.adUnits.slice(0);
-  //
-  //  if (typeof bidsBackHandler === objectType_function) {
-  //    bidmanager.addOneTimeCallback(bidsBackHandler);
-  //  }
-  //
-  //  if (adUnitCodes && utils.isArray(adUnitCodes)) {
-  //    resetBids();
-  //    init(timeout, adUnitCodes);
-  //
-  //  } else if (adUnits && utils.isArray(adUnits)) {
-  //    resetBids();
-  //    pbjs.adUnits = adUnits;
-  //    init(timeout);
-  //  } else {
-  //    //request all ads
-  //    resetBids();
-  //    init(timeout);
-  //  }
-  //
-  //  pbjs.adUnits = adUnitBackup;
-  //}
-
 };
 
 /**
