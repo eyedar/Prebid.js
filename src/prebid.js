@@ -79,105 +79,11 @@ function processQue() {
   }
 }
 
-/*
- *   Main method entry point method
- */
-function init(timeout, adUnitCodeArr) {
-  var cbTimeout = 0;
-  if (typeof timeout === objectType_undefined || timeout === null) {
-    cbTimeout = pbjs.bidderTimeout;
-  } else {
-    cbTimeout = timeout;
-  }
-
-  if (!pbjs.adUnits && pbjs.adUnits.length !== 0) {
-    utils.logMessage('No adUnits configured. No bids requested.');
-    return;
-  }
-
-  //set timeout for all bids
-  setTimeout(bidmanager.executeCallback, cbTimeout);
-
-  //parse settings into internal vars
-  if (adUnitCodeArr && utils.isArray(adUnitCodeArr)) {
-    for (var k = 0; k < adUnitCodeArr.length; k++) {
-      for (var i = 0; i < pbjs.adUnits.length; i++) {
-        if (pbjs.adUnits[i].code === adUnitCodeArr[k]) {
-          pb_placements.push(pbjs.adUnits[i]);
-        }
-      }
-    }
-
-    loadPreBidders();
-    sortAndCallBids();
-  } else {
-    pb_placements = pbjs.adUnits;
-
-    //Aggregrate prebidders by their codes
-    loadPreBidders();
-
-    //sort and call // default no sort
-    sortAndCallBids();
-  }
-}
-
 function timeOutBidders() {
   if (!pb_bidsTimedOut) {
     pb_bidsTimedOut = true;
     var timedOutBidders = bidmanager.getTimedOutBidders();
     events.emit(BID_TIMEOUT, timedOutBidders);
-  }
-}
-
-function sortAndCallBids(sortFunc) {
-  //Translate the bidder map into array so we can sort later if wanted
-  var pbArr = utils._map(pb_bidderMap, function (v) {
-    return v;
-  });
-
-  if (typeof sortFunc === objectType_function) {
-    pbArr.sort(sortFunc);
-  }
-
-  adaptermanager.callBids(pbArr);
-}
-
-function loadPreBidders() {
-
-  for (var i = 0; i < pb_placements.length; i++) {
-    var bids = pb_placements[i][CONSTANTS.JSON_MAPPING.PL_BIDS];
-    var placementCode = pb_placements[i][CONSTANTS.JSON_MAPPING.PL_CODE];
-    storeBidRequestByBidder(pb_placements[i][CONSTANTS.JSON_MAPPING.PL_CODE], pb_placements[i][CONSTANTS.JSON_MAPPING.PL_SIZE], bids);
-
-    //store pending response by placement
-    bidmanager.addBidResponse(placementCode);
-  }
-}
-
-function storeBidRequestByBidder(placementCode, sizes, bids) {
-  for (var i = 0; i < bids.length; i++) {
-
-    var currentBid = bids[i];
-    currentBid.placementCode = placementCode;
-    currentBid.sizes = sizes;
-
-    //look up bidder on map
-    var bidderName = bids[i][CONSTANTS.JSON_MAPPING.BD_BIDDER];
-    var bidderObj = pb_bidderMap[bidderName];
-    if (typeof bidderObj === objectType_undefined) {
-      //bid not found
-      var partnerBids = {
-        bidderCode: bidderName,
-        bids: []
-      };
-      partnerBids.bids.push(currentBid);
-
-      //put bidder on map with bids
-      pb_bidderMap[bidderName] = partnerBids;
-    } else {
-      bidderObj.bids.push(currentBid);
-    }
-
   }
 }
 
@@ -649,18 +555,35 @@ pbjs.removeAdUnit = function (adUnitCode) {
 };
 
 /**
- * Request bids ad-hoc. This function does not add or remove adUnits already configured.
- * @param  {Object} requestObj
- * @param {string[]} requestObj.adUnitCodes  adUnit codes to request. Use this or requestObj.adUnits
- * @param {object[]} requestObj.adUnits AdUnitObjects to request. Use this or requestObj.adUnitCodes
- * @param {number} [requestObj.timeout] Timeout for requesting the bids specified in milliseconds
- * @param {function} [requestObj.bidsBackHandler] Callback to execute when all the bid responses are back or the timeout hits.
- * @alias module:pbjs.requestBids
+ *
+ * @param bidsBackHandler
  */
-pbjs.requestBids = function () {
+pbjs.requestBids = function ({ bidsBackHandler, timeout }) {
+  var cbTimeout = 0;
+
+  if (typeof bidsBackHandler === objectType_function) {
+    bidmanager.addOneTimeCallback(bidsBackHandler);
+  }
+
+  utils.logInfo('Invoking pbjs.requestBids', arguments);
+
+  if (typeof timeout === objectType_undefined || timeout === null) {
+    cbTimeout = pbjs.bidderTimeout;
+  } else {
+    cbTimeout = timeout;
+  }
+
+  // not sure of this logic
+  if (!pbjs.adUnits && pbjs.adUnits.length !== 0) {
+    utils.logMessage('No adUnits configured. No bids requested.');
+    return;
+  }
+
+  //set timeout for all bids
+  setTimeout(bidmanager.executeCallback, cbTimeout);
+
   adaptermanager.callBids();
 
-  //utils.logInfo('Invoking pbjs.requestBids', arguments);
   //if (!requestObj) {
   //  resetBids();
   //  init(timeout);

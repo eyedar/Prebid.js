@@ -62,34 +62,6 @@ exports.callBids = () => {
       utils.logError(`Adapter trying to be called which does not exist: ${bidderCode} adaptermanager.callBids`);
     }
   });
-
-  //for (var i = 0; i < bidderArr.length; i++) {
-  //  //use the bidder code to identify which function to call
-  //  var bidder = bidderArr[i];
-  //  if (bidder.bidderCode && _bidderRegistry[bidder.bidderCode]) {
-  //    utils.logMessage('CALLING BIDDER ======= ' + bidder.bidderCode);
-  //    var currentBidder = _bidderRegistry[bidder.bidderCode];
-  //
-  //    //emit 'bidRequested' event
-  //    events.emit(CONSTANTS.EVENTS.BID_REQUESTED, bidder);
-  //    currentBidder.callBids(bidder);
-  //
-  //    // if the bidder didn't explicitly set the number of bids
-  //    // expected, default to the number of bids passed into the bidder
-  //    if (bidmanager.getExpectedBidsCount(bidder.bidderCode) === undefined) {
-  //      bidmanager.setExpectedBidsCount(bidder.bidderCode, bidder.bids.length);
-  //    }
-  //
-  //    var currentTime = new Date().getTime();
-  //    bidmanager.registerBidRequestTime(bidder.bidderCode, currentTime);
-  //
-  //    if (currentBidder.defaultBidderSettings) {
-  //      bidmanager.registerDefaultBidderSetting(bidder.bidderCode, currentBidder.defaultBidderSettings);
-  //    }
-  //  } else {
-  //    utils.logError('Adapter trying to be called which does not exist: ' + bidder.bidderCode, 'adaptermanager.callBids');
-  //  }
-  //}
 };
 
 exports.registerBidAdapter = function (bidAdaptor, bidderCode) {
