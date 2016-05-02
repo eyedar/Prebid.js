@@ -557,21 +557,16 @@ pbjs.removeAdUnit = function (adUnitCode) {
 /**
  *
  * @param bidsBackHandler
+ * @param timeout
  */
 pbjs.requestBids = function ({ bidsBackHandler, timeout }) {
-  var cbTimeout = 0;
+  const cbTimeout = timeout || pbjs.bidderTimeout;
 
   if (typeof bidsBackHandler === objectType_function) {
     bidmanager.addOneTimeCallback(bidsBackHandler);
   }
 
   utils.logInfo('Invoking pbjs.requestBids', arguments);
-
-  if (typeof timeout === objectType_undefined || timeout === null) {
-    cbTimeout = pbjs.bidderTimeout;
-  } else {
-    cbTimeout = timeout;
-  }
 
   // not sure of this logic
   if (!pbjs.adUnits && pbjs.adUnits.length !== 0) {

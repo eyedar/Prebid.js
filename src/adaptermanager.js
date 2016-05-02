@@ -21,43 +21,52 @@ function flatten(arrayA, arrayB) {
   return arrayA.concat(arrayB);
 }
 
-function getBidSet() {
-  return pbjs.adUnits.map(placement => placement.bids)
-    .reduce(flatten, [])
-    .map(bid => bid.bidder)
-    .filter(uniques);
+function getBidders() {
+  // bidders can be derived from adUnits which will give all configured bidders
+  //return pbjs.adUnits.map(adUnit => adUnit.bids)
+  //  .reduce(flatten, [])
+  //  .map(bid => bid.bidder)
+  //  .filter(uniques);
+
+  // OR bidders can be derived from _bidderRegistry which will give only bidders with registered
+  // adapters
+  return Object.keys(_bidderRegistry);
 }
 
-function getBids({ bidderCode, bidSetId, bidId }) {
+function getBids({ bidderCode, bidCallId, bidSetId }) {
   return pbjs.adUnits.map(adUnit => {
-    return adUnit.bids.filter(bid => {
-      bid.placementCode = adUnit.code;
-      bid.sizes = adUnit.sizes;
-      bid.bidId = bidId;
-      bid.bidSetId = bidSetId;
-      return bid.bidder === bidderCode;
-    });
+    return adUnit.bids.filter(bid => bid.bidder === bidderCode)
+      .map(bid => Object.assign(bid, {
+        placementCode: adUnit.code,
+        sizes: adUnit.sizes,
+        bidId: utils.getUniqueIdentifierStr(),
+        bidSetId,
+        bidCallId
+      }));
   }).reduce(flatten, []);
 }
 
 exports.callBids = () => {
-  const bidSetId = utils.getUniqueIdentifierStr();
+  const bidCallId = utils.getUniqueIdentifierStr();
 
-  getBidSet().forEach(bidderCode => {
-    const bidId = utils.getUniqueIdentifierStr();
+  Object.keys(_bidderRegistry).forEach(bidderCode => {
     const adapter = _bidderRegistry[bidderCode];
     if (adapter) {
-      const bids = {
-        bidSetId,
-        bidId,
+      const bidSetId = utils.getUniqueIdentifierStr();
+      const bidSet = {
         bidderCode,
-        bids: getBids({ bidderCode, bidSetId, bidId }),
+        bidCallId,
+        bidSetId,
+        bids: getBids({ bidderCode, bidCallId, bidSetId }),
         start: new Date().getTime()
       };
+      console.log('bid set:', bidderCode, bidSetId);
       utils.logMessage(`CALLING BIDDER ======= ${bidderCode}`);
-      pbjs._bidsRequested.push(bids);
-      events.emit(CONSTANTS.EVENTS.BID_REQUESTED, bids);
-      adapter.callBids(bids);
+      pbjs._bidsRequested.push(bidSet);
+      events.emit(CONSTANTS.EVENTS.BID_REQUESTED, bidSet);
+      if (bidSet.bids && bidSet.bids.length) {
+        adapter.callBids(bidSet);
+      }
     } else {
       utils.logError(`Adapter trying to be called which does not exist: ${bidderCode} adaptermanager.callBids`);
     }

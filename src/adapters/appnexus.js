@@ -9,27 +9,22 @@ var AppNexusAdapter;
 AppNexusAdapter = function AppNexusAdapter() {
   var baseAdapter = Adapter.createNew('appnexus');
 
-  baseAdapter.callBids = function (params) {
-    var bidCode = baseAdapter.getBidderCode();
+  baseAdapter.callBids = function ({ bids }) {
+    const _adLoader = adloader;
+    bids.forEach(bid => _adLoader.loadScript(buildJPTCall(bid)));
 
-    var anArr = params.bids;
-    var bidsCount = anArr.length;
+    //for (var i = 0; i < bids.length; i++) {
+    //  var bid = bids[i];
+    //  var callbackId = bidRequest.bidId;
+    //  adloader.loadScript(buildJPTCall(bidRequest, callbackId));
 
-    //set expected bids count for callback execution
-    bidmanager.setExpectedBidsCount(bidCode, bidsCount);
-
-    for (var i = 0; i < bidsCount; i++) {
-      var bidRequest = anArr[i];
-      var callbackId = utils.getUniqueIdentifierStr();
-      adloader.loadScript(buildJPTCall(bidRequest, callbackId));
-
-      //store a reference to the bidRequest from the callback id
-      bidmanager.pbCallbackMap[callbackId] = bidRequest;
-    }
+    //store a reference to the bidRequest from the callback id
+    //bidmanager.pbCallbackMap[callbackId] = bidRequest;
+    //}
   };
 
-  function buildJPTCall(bid, callbackId) {
-
+  function buildJPTCall(bid) {
+    const callbackId = bid.bidSetId;
     //determine tag params
     var placementId = utils.getBidIdParamater('placementId', bid.params);
 
@@ -57,7 +52,8 @@ AppNexusAdapter = function AppNexusAdapter() {
     }
 
     jptCall = utils.tryAppendQueryString(jptCall, 'code', inventoryCode);
-    jptCall = utils.tryAppendQueryString(jptCall, 'code', inventoryCode);
+
+    //jptCall = utils.tryAppendQueryString(jptCall, 'code', inventoryCode);
 
     //sizes takes a bit more logic
     var sizeQueryString = '';
@@ -149,7 +145,9 @@ AppNexusAdapter = function AppNexusAdapter() {
       var responseCPM;
       var id = jptResponseObj.callback_uid;
       var placementCode = '';
-      var bidObj = bidmanager.getPlacementIdByCBIdentifer(id);
+
+      // var bidObj = bidmanager.getPlacementIdByCBIdentifer(id);
+      var bidObj = pbjs._bidsRequested.find(bid => bid.bidSetId === id);
       if (bidObj) {
 
         bidCode = bidObj.bidder;

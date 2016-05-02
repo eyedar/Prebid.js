@@ -43,10 +43,10 @@ exports.clearAllBidResponses = function () {
   _callbackExecuted = false;
 
   //init bid response received count
-  initbidResponseReceivedCount();
+  //initbidResponseReceivedCount();
 
   //init expected bids count
-  initExpectedBidsCount();
+  //initExpectedBidsCount();
 
   //clear the callback handler flag
   externalCallbackArr.called = false;
@@ -68,73 +68,79 @@ exports.getTimedOutBidders = function () {
   });
 };
 
-function initbidResponseReceivedCount() {
+//function initbidResponseReceivedCount() {
+//
+//  //bidResponseReceivedCount = {};
+//  for (var prop in bidResponseReceivedCount) {
+//    delete bidResponseReceivedCount[prop];
+//  }
+//
+//  for (var i = 0; i < pbjs.adUnits.length; i++) {
+//    var bids = pbjs.adUnits[i].bids;
+//    for (var j = 0; j < bids.length; j++) {
+//      var bidder = bids[j].bidder;
+//      bidResponseReceivedCount[bidder] = 0;
+//    }
+//  }
+//}
 
-  //bidResponseReceivedCount = {};
-  for (var prop in bidResponseReceivedCount) {
-    delete bidResponseReceivedCount[prop];
-  }
+//exports.increaseBidResponseReceivedCount = function (bidderCode) {
+//  increaseBidResponseReceivedCount(bidderCode);
+//};
 
-  for (var i = 0; i < pbjs.adUnits.length; i++) {
-    var bids = pbjs.adUnits[i].bids;
-    for (var j = 0; j < bids.length; j++) {
-      var bidder = bids[j].bidder;
-      bidResponseReceivedCount[bidder] = 0;
-    }
-  }
-}
+//function increaseBidResponseReceivedCount(bidderCode) {
+//  if (typeof bidResponseReceivedCount[bidderCode] === objectType_undefined) {
+//    bidResponseReceivedCount[bidderCode] = 1;
+//  } else {
+//    bidResponseReceivedCount[bidderCode]++;
+//  }
+//}
+//
+//function initExpectedBidsCount() {
+//  expectedBidsCount = {};
+//}
+//
+//exports.setExpectedBidsCount = function (bidderCode, count) {
+//  expectedBidsCount[bidderCode] = count;
+//};
+//
+//function getExpectedBidsCount(bidderCode) {
+//  return expectedBidsCount[bidderCode];
+//}
+//
+//exports.getExpectedBidsCount = getExpectedBidsCount;
 
-exports.increaseBidResponseReceivedCount = function (bidderCode) {
-  increaseBidResponseReceivedCount(bidderCode);
-};
-
-function increaseBidResponseReceivedCount(bidderCode) {
-  if (typeof bidResponseReceivedCount[bidderCode] === objectType_undefined) {
-    bidResponseReceivedCount[bidderCode] = 1;
-  } else {
-    bidResponseReceivedCount[bidderCode]++;
-  }
-}
-
-function initExpectedBidsCount() {
-  expectedBidsCount = {};
-}
-
-exports.setExpectedBidsCount = function (bidderCode, count) {
-  expectedBidsCount[bidderCode] = count;
-};
-
-function getExpectedBidsCount(bidderCode) {
-  return expectedBidsCount[bidderCode];
-}
-
-exports.getExpectedBidsCount = getExpectedBidsCount;
+function timestamp() { return new Date().getTime(); }
 
 /*
- *   This function should be called to by the BidderObject to register a new bid is in
+ *   This function should be called to by the bidder adapter to register a bid response
  */
 exports.addBidResponse = function (adUnitCode, bid) {
-  var bidResponseObj = {};
-
   if (bid) {
+    Object.assign(bid, {
+      responseTimestamp: timestamp(),
+      cpm: bid.cpm || 0,
+      bidder: bid.bidderCode,
+      adUnitCode
+    });
 
-    //record bid request and resposne time
-    bid.requestTimestamp = bidderStartTimes[bid.bidderCode];
-    bid.responseTimestamp = new Date().getTime();
-    bid.timeToRespond = bid.responseTimestamp - bid.requestTimestamp;
+    //record bid request and response time
+    //bid.requestTimestamp = bidderStartTimes[bid.bidderCode];
+    //bid.responseTimestamp = timestamp();
+    //bid.timeToRespond = bid.responseTimestamp - bid.requestTimestamp;
 
     //increment the bid count
-    increaseBidResponseReceivedCount(bid.bidderCode);
+    //increaseBidResponseReceivedCount(bid.bidderCode);
 
     //get price settings here
-    if (bid.getStatusCode() === 2) {
-      bid.cpm = 0;
-    }
+    //if (bid.getStatusCode() === 2) {
+    //  bid.cpm = 0;
+    //}
 
     // alias the bidderCode to bidder;
     // NOTE: this is to match documentation
     // on custom k-v targeting
-    bid.bidder = bid.bidderCode;
+    //bid.bidder = bid.bidderCode;
 
     //emit the bidAdjustment event before bidResponse, so bid response has the adjusted bid value
     events.emit(CONSTANTS.EVENTS.BID_ADJUSTMENT, bid);
@@ -151,7 +157,7 @@ exports.addBidResponse = function (adUnitCode, bid) {
     bid.pbAg = priceStringsObj.auto;
 
     //put adUnitCode into bid
-    bid.adUnitCode = adUnitCode;
+    //bid.adUnitCode = adUnitCode;
 
     //if there is any key value pairs to map do here
     var keyValues = {};
@@ -160,38 +166,42 @@ exports.addBidResponse = function (adUnitCode, bid) {
       bid.adserverTargeting = keyValues;
     }
 
+    pbjs._bidsReceived.push(bid);
+
     //store a reference to the bidResponse by adId
-    if (bid.adId) {
-      _adResponsesByBidderId[bid.adId] = bid;
-    }
+    //if (bid.adId) {
+    //  _adResponsesByBidderId[bid.adId] = bid;
+    //}
 
     //store by placement ID
-    if (adUnitCode && pbBidResponseByPlacement[adUnitCode] && !utils.isEmpty(pbBidResponseByPlacement[adUnitCode])) {
-      //update bid response object
-      bidResponseObj = pbBidResponseByPlacement[adUnitCode];
+    //if (adUnitCode && pbBidResponseByPlacement[adUnitCode] && !utils.isEmpty(pbBidResponseByPlacement[adUnitCode])) {
+    //  //update bid response object
+    //  bidResponseObj = pbBidResponseByPlacement[adUnitCode];
+    //
+    //  //bidResponseObj.status = statusCode;
+    //  bidResponseObj.bids.push(bid);
+    //
+    //  //increment bid response by placement
+    //  bidResponseObj.bidsReceivedCount++;
+    //
+    //} else {
+    //  //should never reach this code
+    //  utils.logError('Internal error in bidmanager.addBidResponse. Params: ' + adUnitCode + ' & ' + bid);
+    //}
 
-      //bidResponseObj.status = statusCode;
-      bidResponseObj.bids.push(bid);
-
-      //increment bid response by placement
-      bidResponseObj.bidsReceivedCount++;
-
-    } else {
-      //should never reach this code
-      utils.logError('Internal error in bidmanager.addBidResponse. Params: ' + adUnitCode + ' & ' + bid);
-    }
-
-  } else {
-    //create an empty bid bid response object
-    bidResponseObj = {
-      bids: [],
-      allBidsAvailable: false,
-      bidsReceivedCount: 0
-    };
   }
 
+  //else {
+  //  //create an empty bid bid response object
+  //  bidResponseObj = {
+  //    bids: [],
+  //    allBidsAvailable: false,
+  //    bidsReceivedCount: 0
+  //  };
+  //}
+
   //store the bidResponse in a map
-  pbBidResponseByPlacement[adUnitCode] = bidResponseObj;
+  //pbBidResponseByPlacement[adUnitCode] = bidResponseObj;
 
   this.checkIfAllBidsAreIn(adUnitCode);
 
