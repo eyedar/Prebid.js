@@ -869,4 +869,10 @@ pbjs.enableSendAllBids = function () {
   pb_sendAllBids = true;
 };
 
+pbjs.getBidRequest = function (bidId) {
+  // look at optimizing this
+  return pbjs._bidsRequested.map(bidSet => bidSet.bids.find(bid => bid.bidId === bidId))
+    .find(bid => bid)[0];
+};
+
 processQue();

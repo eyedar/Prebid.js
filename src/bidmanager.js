@@ -9,38 +9,38 @@ var externalCallbackByAdUnitArr = [];
 var externalCallbackArr = [];
 var externalOneTimeCallback = null;
 
-var pbCallbackMap = {};
-exports.pbCallbackMap = pbCallbackMap;
+//var pbCallbackMap = {};
+//exports.pbCallbackMap = pbCallbackMap;
 
-var pbBidResponseByPlacement = {};
-exports.pbBidResponseByPlacement = pbBidResponseByPlacement;
+//var pbBidResponseByPlacement = {};
+//exports.pbBidResponseByPlacement = pbBidResponseByPlacement;
 
 //this is used to look up the bid by bid ID later
-var _adResponsesByBidderId = {};
-exports._adResponsesByBidderId = _adResponsesByBidderId;
+//var _adResponsesByBidderId = {};
+//exports._adResponsesByBidderId = _adResponsesByBidderId;
 
-var bidResponseReceivedCount = {};
-exports.bidResponseReceivedCount = bidResponseReceivedCount;
+//var bidResponseReceivedCount = {};
+//exports.bidResponseReceivedCount = bidResponseReceivedCount;
 
-var expectedBidsCount = {};
+//var expectedBidsCount = {};
 var _allBidsAvailable = false;
 var _callbackExecuted = false;
 var _granularity = CONSTANTS.GRANULARITY_OPTIONS.MEDIUM;
 var defaultBidderSettingsMap = {};
 var bidderStartTimes = {};
 
-exports.getPlacementIdByCBIdentifer = function (id) {
-  return pbCallbackMap[id];
-};
+//exports.getPlacementIdByCBIdentifer = function (id) {
+//  return pbCallbackMap[id];
+//};
 
-exports.getBidResponseByAdUnit = function () {
-  return pbBidResponseByPlacement;
+//exports.getBidResponseByAdUnit = function () {
+//  return pbBidResponseByPlacement;
+//
+//};
 
-};
-
-exports.clearAllBidResponses = function () {
-  _allBidsAvailable = false;
-  _callbackExecuted = false;
+//exports.clearAllBidResponses = function () {
+//  _allBidsAvailable = false;
+//  _callbackExecuted = false;
 
   //init bid response received count
   //initbidResponseReceivedCount();
@@ -49,12 +49,12 @@ exports.clearAllBidResponses = function () {
   //initExpectedBidsCount();
 
   //clear the callback handler flag
-  externalCallbackArr.called = false;
-
-  for (var prop in this.pbBidResponseByPlacement) {
-    delete this.pbBidResponseByPlacement[prop];
-  }
-};
+//  externalCallbackArr.called = false;
+//
+//  for (var prop in this.pbBidResponseByPlacement) {
+//    delete this.pbBidResponseByPlacement[prop];
+//  }
+//};
 
 /**
  * Returns a list of bidders that we haven't received a response yet
@@ -112,12 +112,19 @@ exports.getTimedOutBidders = function () {
 
 function timestamp() { return new Date().getTime(); }
 
+function getBidRequest(bidId) {
+  // look at optimizing this
+  return pbjs._bidsRequested.map(bidSet => bidSet.bids.find(bid => bid.bidId === bidId))
+    .find(bid => bid)[0];
+}
+
 /*
  *   This function should be called to by the bidder adapter to register a bid response
  */
 exports.addBidResponse = function (adUnitCode, bid) {
   if (bid) {
-    Object.assign(bid, {
+    const bidId = bid.adId;
+    Object.assign(bid, getBidRequest(bidId), {
       responseTimestamp: timestamp(),
       cpm: bid.cpm || 0,
       bidder: bid.bidderCode,
@@ -347,9 +354,9 @@ exports.executeCallback = function () {
 
 };
 
-exports.allBidsBack = function () {
-  return _allBidsAvailable;
-};
+//exports.allBidsBack = function () {
+//  return _allBidsAvailable;
+//};
 
 function triggerAdUnitCallbacks(adUnitCode) {
   //todo : get bid responses and send in args

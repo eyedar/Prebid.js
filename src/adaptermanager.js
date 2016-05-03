@@ -13,24 +13,8 @@ exports.bidderRegistry = _bidderRegistry;
 pbjs._bidsRequested = [];
 pbjs._bidsReceived = [];
 
-function uniques(value, index, _this) {
-  return _this.indexOf(value) === index;
-}
-
 function flatten(arrayA, arrayB) {
   return arrayA.concat(arrayB);
-}
-
-function getBidders() {
-  // bidders can be derived from adUnits which will give all configured bidders
-  //return pbjs.adUnits.map(adUnit => adUnit.bids)
-  //  .reduce(flatten, [])
-  //  .map(bid => bid.bidder)
-  //  .filter(uniques);
-
-  // OR bidders can be derived from _bidderRegistry which will give only bidders with registered
-  // adapters
-  return Object.keys(_bidderRegistry);
 }
 
 function getBids({ bidderCode, bidCallId, bidSetId }) {
