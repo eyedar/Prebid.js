@@ -112,10 +112,9 @@ exports.getTimedOutBidders = function () {
 
 function timestamp() { return new Date().getTime(); }
 
-function getBidRequest(bidId) {
-  // look at optimizing this
-  return pbjs._bidsRequested.map(bidSet => bidSet.bids.find(bid => bid.bidId === bidId))
-    .find(bid => bid)[0];
+function bidsReceived(adUnitCode) {
+  return pbjs._bidsReceived.map(bidSet => bidSet.bids.filter(bid => bid.placementCode === adUnitCode))
+    .reduce((prev, curr) => prev + curr.length, 0);
 }
 
 /*
@@ -123,13 +122,14 @@ function getBidRequest(bidId) {
  */
 exports.addBidResponse = function (adUnitCode, bid) {
   if (bid) {
-    const bidId = bid.adId;
-    Object.assign(bid, getBidRequest(bidId), {
+    Object.assign(bid, {
       responseTimestamp: timestamp(),
+      requestTimestamp: pbjs._bidsRequested.find(bidRequest => bidRequest.bidderCode === bid.bidderCode).start,
       cpm: bid.cpm || 0,
       bidder: bid.bidderCode,
       adUnitCode
     });
+    bid.timeToRespond = bid.responseTimestamp - bid.requestTimestamp;
 
     //record bid request and response time
     //bid.requestTimestamp = bidderStartTimes[bid.bidderCode];
