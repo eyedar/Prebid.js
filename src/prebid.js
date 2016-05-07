@@ -104,7 +104,7 @@ function getWinningBid(bidArray) {
   return winningBid.bid;
 }
 
-function setGPTAsyncTargeting(code, slot) {
+function setGPTAsyncTargeting(slot) {
   //get the targeting that is already configured
   const keyStrings = getTargetingfromGPTIdentifier(slot);
   const bids = pbjs.getBidResponses(slot.getAdUnitPath());
@@ -384,10 +384,11 @@ pbjs.setTargetingForAdUnitsGPTAsync = function (codeArr) {
     //get all the slots from google tag
     slots = window.googletag.pubads().getSlots();
     for (i = 0; i < slots.length; i++) {
-      var adUnitCode = slots[i].getSlotElementId();
-      if (adUnitCode) {
+      const adUnitCode = slots[i].getSlotElementId();
+      const adUnitPath = slots[i].getAdUnitPath();
+      if (adUnitCode || adUnitPath) {
         //placementBids = getBidsFromGTPIdentifier(slots[i]);
-        setGPTAsyncTargeting(adUnitCode, slots[i]);
+        setGPTAsyncTargeting(slots[i]);
       }
     }
   }

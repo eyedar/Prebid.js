@@ -9,6 +9,10 @@ var externalCallbackByAdUnitArr = [];
 var externalCallbackArr = [];
 var externalOneTimeCallback = null;
 
+const _lgPriceCap = 5.00;
+const _mgPriceCap = 20.00;
+const _hgPriceCap = 20.00;
+
 //var pbCallbackMap = {};
 //exports.pbCallbackMap = pbCallbackMap;
 
@@ -27,7 +31,8 @@ var _allBidsAvailable = false;
 var _callbackExecuted = false;
 var _granularity = CONSTANTS.GRANULARITY_OPTIONS.MEDIUM;
 var defaultBidderSettingsMap = {};
-var bidderStartTimes = {};
+
+//var bidderStartTimes = {};
 
 //exports.getPlacementIdByCBIdentifer = function (id) {
 //  return pbCallbackMap[id];
@@ -61,11 +66,10 @@ var bidderStartTimes = {};
  * @return {array} [description]
  */
 exports.getTimedOutBidders = function () {
-  return utils._map(bidResponseReceivedCount, function (count, bidderCode) {
-    if (count === 0) {
-      return bidderCode;
-    }
-  });
+  return pbjs._bidsRequested
+    .map(bid => bid.bidderCode)
+    .filter((bidder, index, bidders) => bidders.indexOf(bidder) === index)
+    .filter(bidder => pbjs._bidsReceived.map(bid => bid.bidder).indexOf(bidder) < 0);
 };
 
 //function initbidResponseReceivedCount() {
@@ -112,9 +116,16 @@ exports.getTimedOutBidders = function () {
 
 function timestamp() { return new Date().getTime(); }
 
-function bidsReceived(adUnitCode) {
-  return pbjs._bidsReceived.map(bidSet => bidSet.bids.filter(bid => bid.placementCode === adUnitCode))
-    .reduce((prev, curr) => prev + curr.length, 0);
+function bidsBackAdUnit(adUnitCode) {
+  const requested = pbjs.adUnits.find(unit => unit.code === adUnitCode).bids.length;
+  const received = pbjs._bidsReceived.filter(bid => bid.adUnitCode === adUnitCode).length;
+  return requested === received;
+}
+
+function bidsBackAll() {
+  const requested = pbjs.adUnits.map(unit => unit.bids.length).reduce((prev, curr) => curr + prev);
+  const received = pbjs._bidsReceived.length;
+  return requested === received;
 }
 
 /*
@@ -155,7 +166,7 @@ exports.addBidResponse = function (adUnitCode, bid) {
     //emit the bidResponse event
     events.emit(CONSTANTS.EVENTS.BID_RESPONSE, adUnitCode, bid);
 
-    var priceStringsObj = utils.getPriceBucketString(bid.cpm, bid.height, bid.width);
+    const priceStringsObj = getPriceBucketString(bid.cpm, bid.height, bid.width);
 
     //append price strings
     bid.pbLg = priceStringsObj.low;
@@ -169,7 +180,7 @@ exports.addBidResponse = function (adUnitCode, bid) {
     //if there is any key value pairs to map do here
     var keyValues = {};
     if (bid.bidderCode && bid.cpm !== 0) {
-      keyValues = this.getKeyValueTargetingPairs(bid.bidderCode, bid);
+      keyValues = getKeyValueTargetingPairs(bid.bidderCode, bid);
       bid.adserverTargeting = keyValues;
     }
 
@@ -198,6 +209,20 @@ exports.addBidResponse = function (adUnitCode, bid) {
 
   }
 
+  if (bidsBackAdUnit(bid.adUnitCode)) {
+    triggerAdUnitCallbacks(bid.adUnitCode);
+  }
+
+  if (bidsBackAll()) {
+    this.executeCallback();
+  }
+
+  if (bid.timeToRespond > pbjs.bidderTimeout) {
+
+    events.emit(CONSTANTS.EVENTS.BID_TIMEOUT, this.getTimedOutBidders());
+    this.executeCallback();
+  }
+
   //else {
   //  //create an empty bid bid response object
   //  bidResponseObj = {
@@ -210,12 +235,11 @@ exports.addBidResponse = function (adUnitCode, bid) {
   //store the bidResponse in a map
   //pbBidResponseByPlacement[adUnitCode] = bidResponseObj;
 
-  this.checkIfAllBidsAreIn(adUnitCode);
+  //this.checkIfAllBidsAreIn(adUnitCode);
 
-  //TODO: check if all bids are in
 };
 
-exports.getKeyValueTargetingPairs = function (bidderCode, custBidObj) {
+function getKeyValueTargetingPairs(bidderCode, custBidObj) {
   var keyValues = {};
   var bidder_settings = pbjs.bidderSettings || {};
 
@@ -317,38 +341,36 @@ exports.registerDefaultBidderSetting = function (bidderCode, defaultSetting) {
   defaultBidderSettingsMap[bidderCode] = defaultSetting;
 };
 
-exports.registerBidRequestTime = function (bidderCode, time) {
-  bidderStartTimes[bidderCode] = time;
-};
+//exports.registerBidRequestTime = function (bidderCode, time) {
+//  bidderStartTimes[bidderCode] = time;
+//};
 
 exports.executeCallback = function () {
-  var params = [];
+  //var params = [];
 
   //this pbjs.registerBidCallbackHandler will be deprecated soon
-  if (typeof pbjs.registerBidCallbackHandler === objectType_function && !_callbackExecuted) {
-    try {
-      pbjs.registerBidCallbackHandler();
-      _callbackExecuted = true;
-    } catch (e) {
-      _callbackExecuted = true;
-      utils.logError('Exception trying to execute callback handler registered : ' + e.message);
-    }
-  }
+  //if (typeof pbjs.registerBidCallbackHandler === objectType_function && !_callbackExecuted) {
+  //  try {
+  //    pbjs.registerBidCallbackHandler();
+  //    _callbackExecuted = true;
+  //  } catch (e) {
+  //    _callbackExecuted = true;
+  //    utils.logError('Exception trying to execute callback handler registered : ' + e.message);
+  //  }
+  //}
 
   //trigger allBidsBack handler
   //todo: get args
   if (externalCallbackArr.called !== true) {
-    processCallbacks(externalCallbackArr, params);
+    processCallbacks(externalCallbackArr);
     externalCallbackArr.called = true;
   }
 
   //execute one time callback
   if (externalOneTimeCallback) {
-    params = [];
-    var responseObj = pbjs.getBidResponses();
-    params.push(responseObj);
+    //var responseObj = pbjs.getBidResponses();
 
-    processCallbacks(externalOneTimeCallback, params);
+    processCallbacks(externalOneTimeCallback);
     externalOneTimeCallback = null;
   }
 
@@ -364,15 +386,15 @@ function triggerAdUnitCallbacks(adUnitCode) {
   processCallbacks(externalCallbackByAdUnitArr, params);
 }
 
-function processCallbacks(callbackQueue, params) {
+function processCallbacks(callbackQueue) {
   var i;
   if (utils.isArray(callbackQueue)) {
     for (i = 0; i < callbackQueue.length; i++) {
       var func = callbackQueue[i];
-      callFunction(func, params);
+      func.call(pbjs, pbjs._bidsReceived);
     }
   } else {
-    callFunction(callbackQueue, params);
+    callbackQueue.call(pbjs, pbjs._bidsReceived);
   }
 
 }
@@ -390,55 +412,55 @@ function callFunction(func, args) {
   }
 }
 
-function checkBidsBackByAdUnit(adUnitCode) {
-  for (var i = 0; i < pbjs.adUnits.length; i++) {
-    var adUnit = pbjs.adUnits[i];
-    if (adUnit.code === adUnitCode) {
-      var bidsBack = pbBidResponseByPlacement[adUnitCode].bidsReceivedCount;
-
-      //all bids back for ad unit
-      if (bidsBack === adUnit.bids.length) {
-        triggerAdUnitCallbacks(adUnitCode);
-
-      }
-    }
-  }
-}
+//function checkBidsBackByAdUnit(adUnitCode) {
+//  for (var i = 0; i < pbjs.adUnits.length; i++) {
+//    var adUnit = pbjs.adUnits[i];
+//    if (adUnit.code === adUnitCode) {
+//      var bidsBack = pbBidResponseByPlacement[adUnitCode].bidsReceivedCount;
+//
+//      //all bids back for ad unit
+//      if (bidsBack === adUnit.bids.length) {
+//        triggerAdUnitCallbacks(adUnitCode);
+//
+//      }
+//    }
+//  }
+//}
 
 /*
  *   This method checks if all bids have a response (bid, no bid, timeout) and will execute callback method if all bids are in
  *   TODO: Need to track bids by placement as well
  */
 
-exports.checkIfAllBidsAreIn = function (adUnitCode) {
-
-  _allBidsAvailable = checkAllBidsResponseReceived();
-
-  //check by ad units
-  checkBidsBackByAdUnit(adUnitCode);
-
-  if (_allBidsAvailable) {
-    //execute our calback method if it exists && pbjs.initAdserverSet !== true
-    this.executeCallback();
-  }
-};
+//exports.checkIfAllBidsAreIn = function (adUnitCode) {
+//
+//  _allBidsAvailable = checkAllBidsResponseReceived();
+//
+//  //check by ad units
+//  checkBidsBackByAdUnit(adUnitCode);
+//
+//  if (_allBidsAvailable) {
+//    //execute our calback method if it exists && pbjs.initAdserverSet !== true
+//    this.executeCallback();
+//  }
+//};
 
 // check all bids response received by bidder
-function checkAllBidsResponseReceived() {
-  var available = true;
-
-  utils._each(bidResponseReceivedCount, function (count, bidderCode) {
-    var expectedCount = getExpectedBidsCount(bidderCode);
-
-    // expectedCount should be set in the adapter, or it will be set
-    // after we call adapter.callBids()
-    if ((typeof expectedCount === objectType_undefined) || (count < expectedCount)) {
-      available = false;
-    }
-  });
-
-  return available;
-}
+//function checkAllBidsResponseReceived() {
+//  var available = true;
+//
+//  utils._each(bidResponseReceivedCount, function (count, bidderCode) {
+//    var expectedCount = getExpectedBidsCount(bidderCode);
+//
+//    // expectedCount should be set in the adapter, or it will be set
+//    // after we call adapter.callBids()
+//    if ((typeof expectedCount === objectType_undefined) || (count < expectedCount)) {
+//      available = false;
+//    }
+//  });
+//
+//  return available;
+//}
 
 /**
  * Add a one time callback, that is discarded after it is called
@@ -480,3 +502,63 @@ function adjustBids(bid) {
     bid.cpm = bidPriceAdjusted;
   }
 }
+
+function getPriceBucketString(cpm) {
+  //var low = '';
+  //var med = '';
+  //var high = '';
+  //var auto = '';
+
+  var cpmFloat = 0;
+  var returnObj = {
+    low: '',
+    med: '',
+    high: '',
+    auto: ''
+  };
+  try {
+    cpmFloat = parseFloat(cpm);
+    if (cpmFloat) {
+      //round to closest .5
+      if (cpmFloat > _lgPriceCap) {
+        returnObj.low = _lgPriceCap.toFixed(2);
+      } else {
+        returnObj.low = (Math.floor(cpm * 2) / 2).toFixed(2);
+      }
+
+      //round to closest .1
+      if (cpmFloat > _mgPriceCap) {
+        returnObj.med = _mgPriceCap.toFixed(2);
+      } else {
+        returnObj.med = (Math.floor(cpm * 10) / 10).toFixed(2);
+      }
+
+      //round to closest .01
+      if (cpmFloat > _hgPriceCap) {
+        returnObj.high = _hgPriceCap.toFixed(2);
+      } else {
+        returnObj.high = (Math.floor(cpm * 100) / 100).toFixed(2);
+      }
+
+      // round auto default sliding scale
+      if (cpmFloat <= 5) {
+        // round to closest .05
+        returnObj.auto = (Math.floor(cpm * 20) / 20).toFixed(2);
+      } else if (cpmFloat <= 10) {
+        // round to closest .10
+        returnObj.auto = (Math.floor(cpm * 10) / 10).toFixed(2);
+      } else if (cpmFloat <= 20) {
+        // round to closest .50
+        returnObj.auto = (Math.floor(cpm * 2) / 2).toFixed(2);
+      } else {
+        // cap at 20.00
+        returnObj.auto = '20.00';
+      }
+    }
+  } catch (e) {
+    this.logError('Exception parsing CPM :' + e.message);
+  }
+
+  return returnObj;
+
+};
