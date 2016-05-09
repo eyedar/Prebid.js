@@ -1,0 +1,189 @@
+<html>
+
+<head>
+
+<!-- OpenX Header Bidding Code -->
+                <script type="text/javascript" src="//ox-d.sporcle.servedbyopenx.com/w/1.0/jstag?nc=1034071-Sporcle.com"></script>
+                <!-- End OpenX Header Bidding Code -->
+
+                <!-- DistrictM Header Bidding Code -->
+                <script type="text/javascript" src="//hi.districtm.ca/v3.0.102962.js"></script>
+                <script type="text/javascript" src="//hi.districtm.ca/currency.js"></script>
+                <script type="text/javascript" src="//cdn.districtm.ca/v4.0.header.min.js" async></script>
+                <!-- End DistrictM Header Bidding Code -->
+
+                <script type='text/javascript'>
+
+                        // PREBID_TIMEOUT is how long we're waiting for
+                        // partners to return a bid. Partners are given that
+                        // amount of time and then DFP is loaded.
+                        var PREBID_TIMEOUT = 1750;
+
+                        var googletag = googletag || {};
+                        googletag.cmd = googletag.cmd || [];
+                        googletag.cmd.push(function () {
+                                googletag.pubads().disableInitialLoad();
+                        });
+
+                        var myslots = {};
+                        googletag.cmd.push(function() {
+                                myslots.D = googletag.defineSlot('/1034071/Sporcle728x90ATF', [728, 90], 'div-gpt-bnr-atf').addService(googletag.pubads());
+                                myslots.E = googletag.defineSlot('/1034071/Sporcle300x250ATF', [300, 250], 'div-gpt-box-atf').addService(googletag.pubads());
+                                myslots.B = googletag.defineSlot('/1034071/Sporcle300x250BTF', [300, 250], 'div-gpt-box-btf').addService(googletag.pubads());
+                                myslots.A = googletag.defineSlot('/1034071/Sporcle728x90BTF', [728, 90], 'div-gpt-bnr-btf').addService(googletag.pubads());
+
+                                googletag.pubads().enableSingleRequest();
+                                googletag.enableServices();
+                        });
+
+                        // initAdserver: Will be called when all bids are back
+                        // or when the timeout is reached.
+                        function initAdserver() {
+
+                                // Check to see if DFP has already been loaded
+                                if (pbjs.initAdserverSet) return;
+
+                                googletag.cmd.push(function () {
+                                    pbjs.que.push(function () {
+                                        pbjs.setTargetingForGPTAsync();
+                                    });
+                                    googletag.pubads().refresh();
+                                });
+
+                                pbjs.initAdserverSet = true; // Flag to indicate DFP has been loaded
+                        };
+
+                        // This setTimeout() call delays the load of DFP by PREBID_TIMEOUT milliseconds
+                        setTimeout(initAdserver, PREBID_TIMEOUT);
+                        var pbjs = pbjs || {};
+
+                        // Prebid commands are added into this command queue
+                        pbjs.que = pbjs.que || [];
+
+                        // Load prebid.js library
+                        (function() {
+                                var pbjsEl = document.createElement("script");
+                                pbjsEl.type = "text/javascript";
+                                pbjsEl.async = true;
+                                pbjsEl.src = "<?= Sporcle\Version::getWithPath('/js/prebid.js'); ?>";
+                                var pbjsTargetEl = document.getElementsByTagName("head")[0];
+                                pbjsTargetEl.insertBefore(pbjsEl, pbjsTargetEl.firstChild);
+                        })();
+
+                        // Load GPT library
+                        (function() {
+                                        var gads = document.createElement('script');
+                                        gads.async = true;
+                                        gads.type = 'text/javascript';
+                                        var useSSL = 'https:' == document.location.protocol;
+                                        gads.src = (useSSL ? 'https:' : 'http:') +
+                                        '//www.googletagservices.com/tag/js/gpt.js';
+                                        var node = document.getElementsByTagName('script')[0];
+                                        node.parentNode.insertBefore(gads, node);
+                        })();
+
+
+                        // Prebid commands are wrapped in this queue since the library loads
+                        // asynchronously and may load after a command has been added
+                        pbjs.que.push(function() {
+                                var adUnits = [{
+                                        code: 'div-gpt-bnr-atf',
+                                        sizes: [[728,90]],
+                                        bids: [
+                                        {
+                                                bidder: 'aol',
+                                                params: { placement: '3930218',
+                                                          network: '9894.1',
+                                                          sizeId: '225',
+                                                          alias: '3930218' }
+                                        }]
+                                }, {
+                                        code: 'div-gpt-box-atf',
+                                        sizes: [[300,250]],
+                                        bids: [
+                                        {
+                                                bidder: 'aol',
+                                                params: { placement: '3930219',
+                                                          network: '9894.1',
+                                                          sizeId: '170',
+                                                          alias: '3930219' }
+                                        }]
+                                }, {
+                                        code: 'div-gpt-box-btf',
+                                        sizes: [[300,250]],
+                                        bids: [
+                                        {
+                                               bidder: 'aol',
+                                                params: { placement: '3930220',
+                                                          network: '9894.1',
+                                                          sizeId: '170',
+                                                          alias: '3930220' }
+
+                                        }]
+                                }, {
+                                        code: 'div-gpt-bnr-btf',
+                                        sizes: [[728,90]],
+                                        bids: [
+                                        {
+                                                bidder: 'aol',
+                                                params: { placement: '3930217',
+                                                          network: '9894.1',
+                                                          sizeId: '225',
+                                                          alias: '3930217' }
+                                        }]
+                                }];
+                                pbjs.addAdUnits(adUnits);
+
+                                pbjs.bidderSettings = {
+                                        aol: {
+                                                bidCpmAdjustment : function(bidCpm){
+                                                        // AOL bids gross prices; net is 85%
+                                                        return bidCpm * .85;
+                                                }
+                                        }
+                                };
+
+                                // Send out the header bidding requests
+                                pbjs.requestBids({
+                                        bidsBackHandler: function(bidResponses) {
+                                                initAdserver();
+                                        }
+                                })
+                        });
+                </script>
+</head>
+
+<body>
+
+<h1>728x90 ATF</h1>
+<div id='div-gpt-bnr-atf' style='height:90px; width:728px;' class="yak" data-slot="D">
+<script type='text/javascript'>
+googletag.cmd.push(function() { googletag.display('div-gpt-bnr-atf'); });
+</script>
+</div>
+
+<h1>300x250 ATF</h1>
+<div id='div-gpt-box-atf' style='height:250px; width:300px;' class="yak" data-slot="E">
+<script type='text/javascript'>
+googletag.cmd.push(function() { googletag.display('div-gpt-box-atf'); });
+</script>
+</div>
+
+<h1>728x90 BTF</h1>
+<div id='div-gpt-bnr-btf' style='height:90px; width:728px;' class="yak" data-slot="A">
+<script type='text/javascript'>
+googletag.cmd.push(function() { googletag.display('div-gpt-bnr-btf'); });
+</script>
+</div>
+
+<h1>300x250 BTF</h1>
+<div id='div-gpt-box-btf' style='height:250px; width:300px;' class="yak" data-slot="B">
+<script type='text/javascript'>
+googletag.cmd.push(function() { googletag.display('div-gpt-box-btf'); });
+</script>
+</div>
+
+
+</body>
+
+</html>
