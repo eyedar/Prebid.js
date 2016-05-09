@@ -36,7 +36,7 @@ var eventValidators = {
 /* Public vars */
 
 //default timeout for all bids
-pbjs.bidderTimeout = pbjs.bidderTimeout || 3000;
+pbjs.bidderTimeout = pbjs.bidderTimeout || 5000;
 pbjs.logging = pbjs.logging || false;
 
 //let the world know we are loaded
@@ -436,13 +436,42 @@ function getTargetingKeysAsBidder(bidArray) {
   return pairs;
 }
 
+function uniques(value, index, arry) {
+  return arry.indexOf(value) === index;
+}
+
+function getPresetTargeting() {
+  return window.googletag.pubads().getSlots().map(slot => {
+    return {
+      [slot.getAdUnitPath()]: slot.getTargeting()
+    };
+  });
+}
+
+function getWinningBidTargeting() {
+  pbjs._bidsReceived.map(bid => bid.adUnitCode)
+    .filter(uniques)
+    .map(adUnitCode => pbjs._bidsReceived
+      .filter(bid => bid.adUnitCode === adUnitCode ? bid : null)
+      .reduce((prev, curr) => prev.cpm < curr.cpm ? curr : prev, { cpm: 0 }))
+    .map(winner => {
+      return { [winner.adUnitCode]: winner.adserverTargeting };
+    });
+}
+
+// TODO function getBidLandscapeTargeting
 /**
  * Set query string targeting on all GPT ad units.
  * @alias module:pbjs.setTargetingForGPTAsync
  */
 pbjs.setTargetingForGPTAsync = function (codeArr) {
+  var debug = Object.assign(
+  getPresetTargeting(),
+  getWinningBidTargeting()
+);
+
   utils.logInfo('Invoking pbjs.setTargetingForGPTAsync', arguments);
-  pbjs.setTargetingForAdUnitsGPTAsync(codeArr);
+  //pbjs.setTargetingForAdUnitsGPTAsync(codeArr);
 };
 
 /**
